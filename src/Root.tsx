@@ -1,6 +1,7 @@
 import {Composition} from 'remotion';
 import {MyComp} from './Composition';
 import {LeibeautyVideo} from './Leibeauty';
+import {AuraEaseVideo} from './AuraEase';
 
 export const Root: React.FC = () => {
 	return (
@@ -18,6 +19,15 @@ export const Root: React.FC = () => {
 				id="Leibeauty"
 				component={LeibeautyVideo}
 				durationInFrames={375}
+				width={1080}
+				height={1920}
+				fps={30}
+				defaultProps={{}}
+			/>
+			<Composition
+				id="AuraEase"
+				component={AuraEaseVideo}
+				durationInFrames={360}
 				width={1080}
 				height={1920}
 				fps={30}
