@@ -1,7 +1,9 @@
 import {
 	AbsoluteFill,
+	Audio,
 	interpolate,
 	spring,
+	staticFile,
 	useCurrentFrame,
 	useVideoConfig,
 	Series,
@@ -350,6 +352,9 @@ const WithFade: React.FC<{duration: number; children: React.ReactNode}> = ({
 // 60 + 90 + 120 + 90 = 360 frames = 12s
 export const AuraEaseVideo: React.FC = () => {
 	return (
+		<>
+		{/* Place voiceover.mp3 in public/ to activate the voice-over */}
+		<Audio src={staticFile('voiceover.mp3')} volume={1} />
 		<Series>
 			<Series.Sequence durationInFrames={60}>
 				<WithFade duration={60}>
@@ -372,5 +377,6 @@ export const AuraEaseVideo: React.FC = () => {
 				</WithFade>
 			</Series.Sequence>
 		</Series>
+		</>
 	);
 };
