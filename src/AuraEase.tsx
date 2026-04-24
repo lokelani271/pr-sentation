@@ -353,8 +353,7 @@ const WithFade: React.FC<{duration: number; children: React.ReactNode}> = ({
 export const AuraEaseVideo: React.FC = () => {
 	return (
 		<>
-		{/* Place voiceover.mp3 in public/ to activate the voice-over */}
-		<Audio src={staticFile('voiceover.mp3')} volume={1} />
+		<Audio src={staticFile('audio/voice.mp3')} volume={1} />
 		<Series>
 			<Series.Sequence durationInFrames={60}>
 				<WithFade duration={60}>
