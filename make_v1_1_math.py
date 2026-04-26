@@ -1,14 +1,14 @@
 """
 AuraEase™ — Video 1.1 "The Math is Mathing"
-Duration: 14s | Format: 1080x1920 | 30 FPS | H264 | no audio
+Duration: 16s | Format: 1080x1920 | 30 FPS | H264 | no audio
 All visuals generated programmatically — no external assets required.
 
 Scene structure:
   Hook    0-2s   "$150 vs $35. You choose."
   Scene 1 2-5s   Split screen  "Same problem. Different price."
   Scene 2 5-9s   Clock compare "1 hour vs. Unlimited relief."
-  Scene 3 9-12s  Body + patch  "Stop overpaying."
-  Scene 4 12-14s Logo CTA      "The math is mathing."
+  Scene 3 9-14s  Body + patch  "Stop overpaying. Manage your tension daily."
+  Scene 4 14-16s Logo CTA      "The math is mathing."
 """
 
 import os, math
@@ -417,13 +417,13 @@ def scene_spine(t):
         img = put_text(img, "Manage your tension daily.", 460, fb(48),
                        (80, 100, 140), alpha=a2)
 
-    # Price pill bottom
+    # Price pill
     if t >= 1.9:
         a3     = eo(t - 1.9, 0.4)
         pill_w = 420
         pill_h = 90
         pill_x = (W - pill_w) // 2
-        pill_y = H - 340
+        pill_y = H - 420
         pl     = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         ImageDraw.Draw(pl).rounded_rectangle(
             [pill_x, pill_y, pill_x + pill_w, pill_y + pill_h],
@@ -432,6 +432,31 @@ def scene_spine(t):
         img = Image.alpha_composite(img.convert("RGBA"), pl).convert("RGB")
         img = put_text(img, "Only $35", pill_y + pill_h // 2, fb(48),
                        NAVY, alpha=a3)
+
+    # Extended content for 5s scene — 3 checkmarks slide in after 2.5s
+    _checks = [
+        ("Works in 30 seconds",     2.5),
+        ("Invisible under clothes", 3.1),
+        ("$35 vs $150 physio",      3.7),
+    ]
+    ck_x = 145
+    for text, delay in _checks:
+        lt = t - delay
+        if lt < 0:
+            continue
+        a   = eo(lt, 0.32)
+        row = _checks.index((text, delay))
+        cy_ = H - 310 + row * 110
+        dx  = int((1 - a) * -130)
+
+        badge = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        bd    = ImageDraw.Draw(badge)
+        bd.ellipse([ck_x + dx - 30, cy_ - 30, ck_x + dx + 30, cy_ + 30],
+                   fill=(*GOLD, int(255 * a)))
+        bd.text((ck_x + dx - 16, cy_ - 23), "✓",
+                font=fb(38), fill=(*NAVY, int(255 * a)))
+        img = Image.alpha_composite(img.convert("RGBA"), badge).convert("RGB")
+        img = put_text(img, text, cy_, fb(42), NAVY, alpha=a, dx=48 + dx)
 
     return np.array(img)
 
@@ -510,7 +535,7 @@ def scene_final(t):
 # S1 0-2s | S2 2-5s | S3 5-9s | S4 9-12s | S5 12-14s
 # ──────────────────────────────────────────────────────────────────────────────
 
-CUT = [0.0, 2.0, 5.0, 9.0, 12.0, 14.0]
+CUT = [0.0, 2.0, 5.0, 9.0, 14.0, 16.0]
 BD  = 0.20   # crossfade blend duration (s)
 
 _SCENES = [
@@ -550,7 +575,7 @@ def build():
         os.path.dirname(os.path.abspath(__file__)),
         "output", "v1_1_final.mp4"
     )
-    VideoClip(make_frame, duration=14).write_videofile(
+    VideoClip(make_frame, duration=16).write_videofile(
         out,
         fps=FPS,
         codec="libx264",
