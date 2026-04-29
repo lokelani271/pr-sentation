@@ -31,22 +31,23 @@ def fb(size):
 
 def draw_oversized(img, lines, color, alpha=1.0, font_size=215, x_offset=-30):
     """
-    Draw large bold text — each line stacked, left-biased so it bleeds off right edge.
-    Lines are vertically centered as a block.
+    Draw large bold text — each line centered horizontally, block centered vertically.
     """
     overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(overlay)
     fnt = fb(font_size)
-    line_h = font_size + 18
+    line_h = font_size + 24
     total_h = len(lines) * line_h
-    y = H // 2 - total_h // 2 - 80  # sit slightly above center like reference
+    y = H // 2 - total_h // 2 - 60
 
     r, g, b = color
     a = int(alpha * 255)
 
     for line in lines:
-        # Left-biased: start from x_offset so long text bleeds right
-        d.text((x_offset, y), line, font=fnt, fill=(r, g, b, a))
+        bb = d.textbbox((0, 0), line, font=fnt)
+        tw = bb[2] - bb[0]
+        x = (W - tw) // 2
+        d.text((x, y), line, font=fnt, fill=(r, g, b, a))
         y += line_h
 
     base = img.convert("RGBA")
@@ -78,12 +79,10 @@ def make_scene(lines, color, dur, fade_dur=0.30, font_size=215, x_offset=-30):
     return VideoClip(frame, duration=dur)
 
 scenes = [
-    # Hook scenes — white, tight 2-word lines for max impact
-    make_scene(["CAN'T WALK", "AFTER", "LEG DAY?"],       WHITE, 2.5, font_size=185, x_offset=-20),
-    make_scene(["STAIRS:", "YOUR WORST", "ENEMY."],        WHITE, 2.5, font_size=185, x_offset=-20),
-    # Product scenes — gold
-    make_scene(["LEG DAY", "HACK"],                        GOLD,  3.0, font_size=230, x_offset=-25),
-    make_scene(["DON'T SKIP", "RECOVERY."],                GOLD,  2.0, font_size=200, x_offset=-20),
+    make_scene(["CAN'T WALK", "AFTER LEG DAY?"],           WHITE, 2.5, font_size=190),
+    make_scene(["STAIRS:", "YOUR WORST", "ENEMY."],        WHITE, 2.5, font_size=190),
+    make_scene(["LEG DAY", "HACK"],                        GOLD,  3.0, font_size=240),
+    make_scene(["DON'T SKIP", "RECOVERY."],                GOLD,  2.0, font_size=210),
 ]
 
 os.makedirs("output", exist_ok=True)
