@@ -1,3 +1,6 @@
+"""
+v3_3.mp4 — white background style: navy problem text + gold punchline, AURAEASE watermark
+"""
 import os, numpy as np
 from functools import lru_cache
 from PIL import Image, ImageDraw, ImageFont
@@ -8,9 +11,9 @@ except ImportError:
     from moviepy import VideoClip, concatenate_videoclips
 
 W, H, FPS = 1080, 1920, 30
-NAVY  = (27, 42, 74)
-GOLD  = (201, 169, 110)
 WHITE = (255, 255, 255)
+NAVY  = (27,  42,  74)
+GOLD  = (197, 158,  80)
 
 FONT_PATHS = [
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
@@ -25,36 +28,103 @@ def fb(size):
             return ImageFont.truetype(p, size)
     return ImageFont.load_default()
 
-def put_text(img, lines, cy, fnt, color, alpha=1.0):
+def draw_watermark(img, alpha=1.0):
     overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(overlay)
-    line_h = fnt.size + 22
-    total_h = len(lines) * line_h
-    y = cy - total_h // 2
-    for line in lines:
-        bb = d.textbbox((0, 0), line, font=fnt)
-        tw = bb[2] - bb[0]
-        x = (W - tw) // 2
-        r, g, b = color
-        d.text((x, y), line, font=fnt, fill=(r, g, b, int(alpha * 255)))
-        y += line_h
+    fnt = fb(42)
+    txt = "AURAEASE"
+    bb = d.textbbox((0, 0), txt, font=fnt)
+    tw = bb[2] - bb[0]
+    d.text(((W - tw) // 2, H - 120), txt, font=fnt,
+           fill=(*NAVY, int(alpha * 200)))
     base = img.convert("RGBA")
     base.alpha_composite(overlay)
-    return base.convert("RGB")
+    return base
 
-def make_scene(lines, color, dur, fade_dur=0.30):
-    fnt = fb(95)
+def make_two_block(top_lines, top_color, top_size,
+                   bot_lines, bot_color, bot_size,
+                   dur, gap=80, fade_dur=0.30, bg=WHITE):
+    """White bg, two stacked text blocks with gap."""
     def frame(t):
-        img = Image.new("RGB", (W, H), NAVY)
+        img = Image.new("RGB", (W, H), bg)
         alpha = min(t / fade_dur, 1.0, (dur - t) / fade_dur)
-        return np.array(put_text(img, lines, H // 2, fnt, color, alpha=alpha))
+
+        fnt_top = fb(top_size)
+        fnt_bot = fb(bot_size)
+        lh_top = top_size + 28
+        lh_bot = bot_size + 28
+        total_h = len(top_lines)*lh_top + gap + len(bot_lines)*lh_bot
+        y = H // 2 - total_h // 2 - 60
+
+        overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        d = ImageDraw.Draw(overlay)
+        a = int(alpha * 255)
+
+        for line in top_lines:
+            r, g, b = top_color
+            bb = d.textbbox((0, 0), line, font=fnt_top)
+            tw = bb[2] - bb[0]
+            d.text(((W - tw) // 2, y), line, font=fnt_top, fill=(r, g, b, a))
+            y += lh_top
+        y += gap
+        for line in bot_lines:
+            r, g, b = bot_color
+            bb = d.textbbox((0, 0), line, font=fnt_bot)
+            tw = bb[2] - bb[0]
+            d.text(((W - tw) // 2, y), line, font=fnt_bot, fill=(r, g, b, a))
+            y += lh_bot
+
+        base = img.convert("RGBA")
+        base.alpha_composite(overlay)
+        img2 = draw_watermark(base, alpha=alpha)
+        return np.array(img2.convert("RGB"))
+    return VideoClip(frame, duration=dur)
+
+def make_single(lines, color, size, dur, fade_dur=0.30, bg=WHITE):
+    """White bg, single centered block."""
+    def frame(t):
+        img = Image.new("RGB", (W, H), bg)
+        alpha = min(t / fade_dur, 1.0, (dur - t) / fade_dur)
+        fnt = fb(size)
+        lh = size + 28
+        total_h = len(lines) * lh
+        y = H // 2 - total_h // 2 - 40
+        overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        d = ImageDraw.Draw(overlay)
+        a = int(alpha * 255)
+        for line in lines:
+            r, g, b = color
+            bb = d.textbbox((0, 0), line, font=fnt)
+            tw = bb[2] - bb[0]
+            d.text(((W - tw) // 2, y), line, font=fnt, fill=(r, g, b, a))
+            y += lh
+        base = img.convert("RGBA")
+        base.alpha_composite(overlay)
+        img2 = draw_watermark(base, alpha=alpha)
+        return np.array(img2.convert("RGB"))
     return VideoClip(frame, duration=dur)
 
 scenes = [
-    make_scene(["Sore for 4 days", "is NOT normal."],               WHITE, 2.5),
-    make_scene(["Why are you still", "limping on Wednesday?"],       WHITE, 2.5),
-    make_scene(["Mimics professional", "thermal therapy."],          GOLD,  3.0),
-    make_scene(["Soreness is optional."],                            GOLD,  2.0),
+    # s1 — reference style: problem (navy) + punchline (gold)
+    make_two_block(
+        ["SORE FOR", "4 DAYS?"], NAVY, 210,
+        ["NOT ANYMORE."],        GOLD, 190,
+        dur=2.5, gap=90,
+    ),
+    # s2 — problem line on white
+    make_two_block(
+        ["STILL LIMPING", "ON WEDNESDAY?"], NAVY, 185,
+        ["SAME."],                          GOLD, 200,
+        dur=2.5, gap=90,
+    ),
+    # s3 — gold solution on white
+    make_single(["MIMICS PRO", "THERMAL", "THERAPY."], GOLD, 200, dur=3.0),
+    # s4 — CTA
+    make_two_block(
+        ["SORENESS"],     NAVY, 210,
+        ["IS OPTIONAL."], GOLD, 195,
+        dur=2.0, gap=70,
+    ),
 ]
 
 os.makedirs("output", exist_ok=True)
