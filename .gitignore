@@ -1,3 +1,5 @@
 node_modules/
 out/
 .remotion/
+.claude/settings.local.json
+tmp/
