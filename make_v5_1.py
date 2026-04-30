@@ -19,7 +19,7 @@ TOTAL       = 11.0
 NAVY        = (27,  42,  74)
 WHITE       = (255, 255, 255)
 GOLD        = (197, 158,  80)
-PAD         = 65
+MAX_TXT_W   = W - 80   # max text width before shrinking
 FADE_IN     = 0.20
 XF          = 0.30   # crossfade duration
 
@@ -49,26 +49,45 @@ def draw_watermark(img, alpha=1.0):
     base.alpha_composite(overlay)
     return base
 
+def fit_font(line, max_size):
+    """Shrink font until the line fits within MAX_TXT_W."""
+    size = max_size
+    while size > 40:
+        fnt = fb(size)
+        dummy = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+        bb = dummy.textbbox((0, 0), line, font=fnt)
+        if bb[2] - bb[0] <= MAX_TXT_W:
+            return fnt, size
+        size -= 4
+    return fb(40), 40
+
 def render_scene(lines, color, font_size, alpha=1.0, stroke=False):
-    """Left-aligned text block, vertically centered."""
+    """Centered text block, auto-fits each line within screen width."""
     img = Image.new("RGB", (W, H), NAVY)
     overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(overlay)
-    fnt = fb(font_size)
-    lh = font_size + 22
-    total_h = len(lines) * lh
-    y = H // 2 - total_h // 2 - 40
     a = int(alpha * 255)
     r, g, b = color
-    for line in lines:
+
+    # Pre-compute fitted font sizes and line heights
+    fitted = [fit_font(line, font_size) for line in lines]
+    lh_list = [sz + 22 for _, sz in fitted]
+    total_h = sum(lh_list)
+    y = H // 2 - total_h // 2 - 40
+
+    for (fnt, sz), lh, line in zip(fitted, lh_list, lines):
+        bb = d.textbbox((0, 0), line, font=fnt)
+        tw = bb[2] - bb[0]
+        x = (W - tw) // 2
         if stroke:
-            d.text((PAD, y), line, font=fnt,
+            d.text((x, y), line, font=fnt,
                    fill=(r, g, b, a),
                    stroke_width=2,
                    stroke_fill=(255, 255, 255, a))
         else:
-            d.text((PAD, y), line, font=fnt, fill=(r, g, b, a))
+            d.text((x, y), line, font=fnt, fill=(r, g, b, a))
         y += lh
+
     base = img.convert("RGBA")
     base.alpha_composite(overlay)
     return draw_watermark(base, alpha=alpha).convert("RGB")
