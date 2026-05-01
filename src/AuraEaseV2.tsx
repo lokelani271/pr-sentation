@@ -1,9 +1,7 @@
 import {
 	AbsoluteFill,
-	Img,
 	interpolate,
 	spring,
-	staticFile,
 	useCurrentFrame,
 	useVideoConfig,
 } from 'remotion';
@@ -41,21 +39,6 @@ function slamStyle(frame: number, fps: number, delay = 0) {
 	};
 }
 
-// Optional AI background — renders only when the file exists in public/bg/
-function BgImage({src, overlay = 0.55}: {src: string; overlay?: number}) {
-	return (
-		<AbsoluteFill>
-			<Img
-				src={staticFile(src)}
-				style={{width: '100%', height: '100%', objectFit: 'cover'}}
-			/>
-			<AbsoluteFill
-				style={{background: `rgba(${overlay < 0.5 ? '0,0,0' : '27,42,74'},${overlay})`}}
-			/>
-		</AbsoluteFill>
-	);
-}
-
 // ── Scene 1 — HOOK (70f = 2.3s) ─────────────────────────────────────────────
 // "HATE BACK PAIN?" — word-by-word slam + glowing underline
 const Scene1: React.FC = () => {
@@ -76,9 +59,6 @@ const Scene1: React.FC = () => {
 				flexDirection: 'column',
 			}}
 		>
-			{/* Try AI background if generated */}
-			<BgImage src="bg/bg_gym.jpg" overlay={0.7} />
-
 			<div style={{textAlign: 'center', position: 'relative', zIndex: 1}}>
 				{/* Word-by-word slam */}
 				{[
@@ -406,9 +386,6 @@ const Scene4: React.FC = () => {
 				opacity: fadeOut,
 			}}
 		>
-			{/* Try AI background if generated */}
-			<BgImage src="bg/bg_victory.jpg" overlay={0.75} />
-
 			{/* Ambient ring */}
 			<div style={{
 				position: 'absolute',
